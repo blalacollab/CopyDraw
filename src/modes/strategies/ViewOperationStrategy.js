@@ -1,5 +1,7 @@
 // ViewOperationStrategy：视图操作策略
 // 负责视图平移、缩放、旋转等交互
+import { getNextScale } from '../../utils/zoom.js'
+
 export class ViewOperationStrategy {
   constructor({ mode, eventEmitter, viewport, canvasArea, maxScale = 30 }) {
     this.mode = mode
@@ -11,6 +13,7 @@ export class ViewOperationStrategy {
     this._pendingViewportUpdate = false
     this._pendingViewportMove = null
     this.maxScale = maxScale
+    this.forcePanning = false
   }
 
   activate() {
@@ -18,6 +21,7 @@ export class ViewOperationStrategy {
     this.lastMouse = null
     this._pendingViewportUpdate = false
     this._pendingViewportMove = null
+    this.forcePanning = false
   }
 
   deactivate() {
@@ -25,6 +29,7 @@ export class ViewOperationStrategy {
     this.lastMouse = null
     this._pendingViewportUpdate = false
     this._pendingViewportMove = null
+    this.forcePanning = false
   }
 
   handleEvent(e) {
@@ -46,6 +51,24 @@ export class ViewOperationStrategy {
     }
   }
 
+  togglePanning() {
+    this.forcePanning = !this.forcePanning
+    if (this.forcePanning) {
+      this._setCursor('grab')
+    } else {
+      this.isPanning = false
+      this.lastMouse = null
+      this._setCursor('default')
+    }
+  }
+
+  _setCursor(cursor) {
+    if (this.canvasArea?.dataCanvas) {
+      this.canvasArea.dataCanvas.style.cursor = cursor
+    }
+    this.eventEmitter.emit('cursorChange', cursor)
+  }
+
   _onMouseDown(e) {
     if (e.button === 0) {
       this.lastMouse = { x: e.offsetX, y: e.offsetY }
@@ -62,7 +85,7 @@ export class ViewOperationStrategy {
         return
       }
       this.isPanning = true
-      this.eventEmitter.emit('cursorChange', 'grabbing')
+      this._setCursor('grabbing')
     }
 
     this._pendingViewportMove = { x: e.offsetX, y: e.offsetY }
@@ -96,7 +119,7 @@ export class ViewOperationStrategy {
   _onMouseUp(e) {
     if (e.button === 0) {
       if (this.isPanning) {
-        this.eventEmitter.emit('cursorChange', 'default')
+        this._setCursor(this.forcePanning ? 'grab' : 'default')
       }
       this.isPanning = false
       this.lastMouse = null
@@ -108,14 +131,7 @@ export class ViewOperationStrategy {
     if (e.cancelable) e.preventDefault()
     if (!this.viewport) return
     const delta = e.deltaY > 0 ? 1 : -1
-    let zoomAmount
-    if (this.viewport.scale <= 1) {
-      zoomAmount = 0.1
-    } else {
-      zoomAmount = 0.15 * this.viewport.scale
-    }
-    let newScale = this.viewport.scale + delta * zoomAmount
-    newScale = Math.min(Math.max(newScale, 0.1), this.maxScale)
+    const newScale = getNextScale(this.viewport.scale, delta, this.maxScale, 0.1)
     const rect = this.canvasArea.dataCanvas.getBoundingClientRect()
     const offsetX = e.clientX - rect.left
     const offsetY = e.clientY - rect.top

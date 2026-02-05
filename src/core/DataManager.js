@@ -171,7 +171,11 @@ export class DataManager {
     if (!this.db) return
     try {
       for (const ele of this.elements.values()) {
-        await saveElement(this.db, ele)
+        let dbEle = ele
+        if (ele.type === 'ImgElement' && ele.imgdata instanceof ImageBitmap) {
+          dbEle = { ...ele, imgdata: await imageBitmapToBlob(ele.imgdata) }
+        }
+        await saveElement(this.db, dbEle)
       }
       console.log('[DataManager] 保存成功')
     } catch (e) {

@@ -67,9 +67,8 @@ export class RenderKeyboardStrategy {
     }
 
     if (strategyChanged && newStrategy) {
-      this.mode.setRenderStrategy(newStrategy)
-      // Notify TopBar to update dropdown
-      this.eventEmitter.emit('renderStrategyChanged', newStrategy)
+      // 统一通过事件驱动渲染策略切换与 UI 同步
+      this.eventEmitter.emit('renderStrategyChange', newStrategy)
     }
   }
 }

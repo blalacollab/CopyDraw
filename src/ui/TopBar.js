@@ -34,7 +34,7 @@ export class TopBar {
     })
 
     // 监听渲染策略变化事件（用于快捷键切换时的同步）
-    this.eventEmitter.on('renderStrategyChanged', (strategyKey) => {
+    this.eventEmitter.on('renderStrategyChange', (strategyKey) => {
       console.log('[TopBar] 渲染策略变化', strategyKey)
       this.setCurrentRenderStrategy(strategyKey)
     })
@@ -129,9 +129,21 @@ export class TopBar {
    */
   _exportImage() {
     try {
+      const backgroundCanvas = document.getElementById('backgroundCanvas')
       const dataCanvas = document.getElementById('dataCanvas')
       if (!dataCanvas) return
-      const url = dataCanvas.toDataURL('image/png')
+
+      // 合成导出：背景层 + 数据层（不包含选择/鼠标/临时层）
+      const exportCanvas = document.createElement('canvas')
+      exportCanvas.width = dataCanvas.width
+      exportCanvas.height = dataCanvas.height
+      const ctx = exportCanvas.getContext('2d')
+      if (backgroundCanvas) {
+        ctx.drawImage(backgroundCanvas, 0, 0)
+      }
+      ctx.drawImage(dataCanvas, 0, 0)
+
+      const url = exportCanvas.toDataURL('image/png')
       const a = document.createElement('a')
       a.href = url
       a.download = 'export.png'

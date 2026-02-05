@@ -4,12 +4,15 @@ export class ModeEventDispatcher {
   constructor(target) {
     this.target = target // 事件目标（如canvas）
     this.handlers = {} // { eventType: [handler1, handler2, ...] }
+    this._boundDispatchers = {} // { eventType: boundDispatch }
   }
 
   addEventListener(eventType, handler, options) {
     if (!this.handlers[eventType]) {
       this.handlers[eventType] = []
-      this.target.addEventListener(eventType, this._dispatch.bind(this, eventType), options)
+      const bound = this._dispatch.bind(this, eventType)
+      this._boundDispatchers[eventType] = bound
+      this.target.addEventListener(eventType, bound, options)
     }
     this.handlers[eventType].push(handler)
   }
@@ -18,7 +21,11 @@ export class ModeEventDispatcher {
     if (!this.handlers[eventType]) return
     this.handlers[eventType] = this.handlers[eventType].filter((h) => h !== handler)
     if (this.handlers[eventType].length === 0) {
-      this.target.removeEventListener(eventType, this._dispatch.bind(this, eventType))
+      const bound = this._boundDispatchers[eventType]
+      if (bound) {
+        this.target.removeEventListener(eventType, bound)
+      }
+      delete this._boundDispatchers[eventType]
       delete this.handlers[eventType]
     }
   }
@@ -32,8 +39,12 @@ export class ModeEventDispatcher {
 
   clearAll() {
     for (const eventType in this.handlers) {
-      this.target.removeEventListener(eventType, this._dispatch.bind(this, eventType))
+      const bound = this._boundDispatchers[eventType]
+      if (bound) {
+        this.target.removeEventListener(eventType, bound)
+      }
     }
     this.handlers = {}
+    this._boundDispatchers = {}
   }
 }

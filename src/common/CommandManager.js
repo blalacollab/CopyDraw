@@ -28,9 +28,9 @@ export class CommandManager {
    * 执行命令
    * @param {Command} command
    */
-  execute(command) {
+  async execute(command) {
     try {
-      command.execute()
+      await command.execute()
       this.undoStack.push(command)
       this.redoStack = []
       this.notifyUI()
@@ -44,11 +44,11 @@ export class CommandManager {
   /**
    * 撤销
    */
-  undo() {
+  async undo() {
     if (!this.canUndo()) return
     try {
       const command = this.undoStack.pop()
-      command.undo()
+      await command.undo()
       this.redoStack.push(command)
       this.notifyUI()
       console.log('[CommandManager] 撤销命令', command.constructor.name)
@@ -61,11 +61,11 @@ export class CommandManager {
   /**
    * 重做
    */
-  redo() {
+  async redo() {
     if (!this.canRedo()) return
     try {
       const command = this.redoStack.pop()
-      command.execute()
+      await command.execute()
       this.undoStack.push(command)
       this.notifyUI()
       console.log('[CommandManager] 重做命令', command.constructor.name)

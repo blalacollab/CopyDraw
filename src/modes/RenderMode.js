@@ -66,6 +66,9 @@ export class RenderMode extends BaseMode {
 
     Object.values(this.strategies).forEach((s) => s.activate && s.activate())
     this._addDOMEventListeners()
+    // 清理临时层与鼠标层，避免残留
+    this.eventEmitter.emit('setTemporary', {})
+    this.eventEmitter.emit('renderMousePos', null)
     this.render()
   }
 

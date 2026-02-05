@@ -1,5 +1,7 @@
 // ImportExportStrategy：导入导出策略
 // 负责 Ctrl+I/Ctrl+O 的 json 导入导出
+import { generateId } from '../../utils/id.js'
+
 export class ImportExportStrategy {
   constructor({ mode, dataManager }) {
     this.mode = mode
@@ -21,7 +23,11 @@ export class ImportExportStrategy {
           const arr = JSON.parse(text)
           if (Array.isArray(arr)) {
             for (const ele of arr) {
-              await this.dataManager.addElement(ele)
+              if (!ele || typeof ele !== 'object') continue
+              const cloned = JSON.parse(JSON.stringify(ele))
+              const type = cloned.type || 'Element'
+              cloned.id = generateId(type)
+              await this.dataManager.addElement(cloned)
             }
             this.mode.reRender()
             this.mode.updateTemporary()
