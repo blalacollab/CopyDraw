@@ -82,7 +82,10 @@ export class TextMode extends BaseMode {
       if (this._isInputTarget(e.target)) {
         return
       }
-      if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && e.shiftKey) {
+      if (
+        (e.key === 'ArrowLeft' || e.key === 'ArrowRight') &&
+        (e.ctrlKey || e.metaKey || e.shiftKey)
+      ) {
         e.preventDefault()
         this.strategies.view.handleRotation(e.key)
       }

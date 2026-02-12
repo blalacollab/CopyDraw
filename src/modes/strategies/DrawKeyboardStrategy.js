@@ -27,7 +27,7 @@ export class DrawKeyboardStrategy {
         break
       case 'ArrowLeft':
       case 'ArrowRight':
-        if (e.shiftKey) {
+        if (e.ctrlKey || e.metaKey || e.shiftKey) {
           e.preventDefault()
           this.strategies.view.handleRotation(e.key)
         }
