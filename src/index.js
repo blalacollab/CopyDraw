@@ -168,11 +168,12 @@ window.addEventListener('resize', () => {
   canvasArea.resizeCanvases(canvasContainer.clientWidth, canvasContainer.clientHeight)
 })
 
-// 9. 快捷键支持模式切换（数字键1/2/3）
+// 9. 快捷键支持模式切换（数字键1/2/3/4）
 document.addEventListener('keydown', (e) => {
   if (e.key === '1') leftBar.btnViewEdit.click()
   if (e.key === '2') leftBar.btnDraw.click()
-  if (e.key === '3') leftBar.btnRender.click()
+  if (e.key === '3') leftBar.btnText.click()
+  if (e.key === '4') leftBar.btnRender.click()
   if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
     eventEmitter.emit('saveAll')
     e.preventDefault()

@@ -1,7 +1,6 @@
 // DragElementStrategy：拖动元素操作策略
 // 只负责拖动元素的相关交互和状态
 import { MoveElementsCommand } from '../../commands/MoveElementsCommand.js'
-import { isPointOnElement } from '../../utils/viewEditHelpers.js'
 
 export class DragElementStrategy {
   constructor({ mode, state, eventEmitter, viewport, dataManager, commandManager }) {
@@ -71,7 +70,7 @@ export class DragElementStrategy {
         this.state.drag.startPositions[element.id] = {
           geometies: element.geometies.map((p) => ({ x: p.x, y: p.y }))
         }
-      } else if (element.type === 'ImgElement') {
+      } else if (element.type === 'ImgElement' || element.type === 'TextElement') {
         this.state.drag.startPositions[element.id] = {
           x: element.x,
           y: element.y
@@ -82,6 +81,8 @@ export class DragElementStrategy {
     this.state.drag.movedElements = this.state.selection.selectedElements.map((element) => {
       if (element.type === 'ImgElement') {
         return { ...element, imgdata: element.imgdata }
+      } else if (element.type === 'TextElement') {
+        return { ...element }
       } else if (element.type === 'LineElement' || element.type === 'PathElement') {
         return JSON.parse(JSON.stringify(element))
       }
@@ -141,6 +142,12 @@ export class DragElementStrategy {
             y: startPosition.y + totalDy,
             imgdata: element.imgdata
           }
+        } else if (element.type === 'TextElement') {
+          return {
+            ...element,
+            x: startPosition.x + totalDx,
+            y: startPosition.y + totalDy
+          }
         } else if (element.type === 'LineElement' || element.type === 'PathElement') {
           const elementCopy = JSON.parse(JSON.stringify(element))
           elementCopy.geometies = startPosition.geometies.map((point) => ({
@@ -167,7 +174,7 @@ export class DragElementStrategy {
           this.state.drag.endPositions[element.id] = {
             geometies: element.geometies.map((p) => ({ x: p.x, y: p.y }))
           }
-        } else if (element.type === 'ImgElement') {
+        } else if (element.type === 'ImgElement' || element.type === 'TextElement') {
           this.state.drag.endPositions[element.id] = {
             x: element.x,
             y: element.y
@@ -203,7 +210,7 @@ export class DragElementStrategy {
         this.state.drag.endPositions[element.id] = {
           geometies: element.geometies.map((p) => ({ x: p.x, y: p.y }))
         }
-      } else if (element.type === 'ImgElement') {
+      } else if (element.type === 'ImgElement' || element.type === 'TextElement') {
         this.state.drag.endPositions[element.id] = {
           x: element.x,
           y: element.y
@@ -247,6 +254,8 @@ export class DragElementStrategy {
     this.state.drag.movedElements = this.state.drag.movedElements.map((element) => {
       if (element.type === 'ImgElement') {
         return { ...element, x: element.x + dx, y: element.y + dy, imgdata: element.imgdata }
+      } else if (element.type === 'TextElement') {
+        return { ...element, x: element.x + dx, y: element.y + dy }
       } else if (element.type === 'LineElement' || element.type === 'PathElement') {
         const elementCopy = JSON.parse(JSON.stringify(element))
         elementCopy.geometies = elementCopy.geometies.map((point) => ({

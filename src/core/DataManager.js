@@ -3,6 +3,7 @@ import { EventEmitter } from '../common/EventEmitter.js'
 import { LineElement } from '../elements/LineElement.js'
 import { ImgElement } from '../elements/ImgElement.js'
 import { PathElement } from '../elements/PathElement.js'
+import { TextElement } from '../elements/TextElement.js'
 
 function restoreElement(obj) {
   if (!obj || !obj.type) return obj
@@ -15,6 +16,7 @@ function restoreElement(obj) {
     return Object.assign(new PathElement(), obj)
   }
   if (obj.type === 'ImgElement') return Object.assign(new ImgElement(), obj)
+  if (obj.type === 'TextElement') return Object.assign(new TextElement(), obj)
   return obj
 }
 

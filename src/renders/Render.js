@@ -1,4 +1,5 @@
 import { COLOR } from '../utils/Color.js'
+import { getTextCanvasLayout } from '../utils/textMetrics.js'
 
 export class Render {
   constructor(canvasArea, eventEmitter, viewport) {
@@ -166,6 +167,21 @@ export class Render {
             ctx.stroke()
           }
         }
+        ctx.restore()
+      }
+      if (element.type === 'TextElement') {
+        const ctx = this.canvasArea.dataCtx
+        const canvasPos = viewport.toCanvas(element.x, element.y)
+        const layout = getTextCanvasLayout(element, viewport, canvasPos)
+        const color = element.color || '#ffffff'
+        ctx.save()
+        ctx.fillStyle = color
+        ctx.font = layout.style.font
+        ctx.textAlign = 'left'
+        ctx.textBaseline = 'top'
+        layout.lines.forEach((line, idx) => {
+          ctx.fillText(line, canvasPos.x, canvasPos.y + idx * layout.style.lineHeight)
+        })
         ctx.restore()
       }
     }
@@ -355,6 +371,17 @@ export class Render {
           ctx.stroke()
           ctx.restore()
         }
+        if (element.type === 'TextElement') {
+          const viewPos = viewport.toCanvas(element.x, element.y)
+          const layout = getTextCanvasLayout(element, viewport, viewPos)
+          ctx.save()
+          ctx.strokeStyle = strokeColor
+          ctx.lineWidth = 2
+          ctx.setLineDash([6, 3])
+          ctx.strokeRect(viewPos.x, viewPos.y, layout.width, layout.height)
+          ctx.setLineDash([])
+          ctx.restore()
+        }
       })
     }
 
@@ -401,6 +428,18 @@ export class Render {
             }
           }
           ctx.stroke()
+        }
+        if (element.type === 'TextElement') {
+          const viewPos = viewport.toCanvas(element.x, element.y)
+          const layout = getTextCanvasLayout(element, viewport, viewPos)
+          ctx.fillStyle = COLOR.PATH_MOVING
+          ctx.font = layout.style.font
+          ctx.textAlign = 'left'
+          ctx.textBaseline = 'top'
+          layout.lines.forEach((line, idx) => {
+            ctx.fillText(line, viewPos.x, viewPos.y + idx * layout.style.lineHeight)
+          })
+          ctx.strokeRect(viewPos.x, viewPos.y, layout.width, layout.height)
         }
         ctx.restore()
       })

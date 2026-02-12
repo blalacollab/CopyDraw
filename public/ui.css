@@ -197,3 +197,66 @@ button.visiable {
   color: white;
   font-size: 1rem;
 }
+
+.text-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-dialog-panel {
+  width: min(560px, calc(100vw - 24px));
+  background: #ffffff;
+  border: 1px solid #d2d2d2;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  padding: 12px;
+}
+
+.text-dialog-title {
+  color: #222222;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.text-dialog-input {
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+  border: 1px solid #c8c8c8;
+  border-radius: 6px;
+  padding: 8px;
+  color: #222222;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.text-dialog-input:focus {
+  outline: none;
+  border-color: #e28b34;
+}
+
+.text-dialog-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.text-dialog-btn {
+  min-width: 72px;
+}
+
+.text-dialog-btn-primary {
+  background: #e28b34;
+  border-color: #c57a2c;
+  color: #ffffff;
+}
+
+.text-dialog-btn-primary:hover {
+  background: #f78d23;
+}

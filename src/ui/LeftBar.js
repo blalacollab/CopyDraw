@@ -14,6 +14,7 @@ export class LeftBar {
     this.el = document.getElementById('leftbar')
     this.btnViewEdit = document.getElementById('edit-view')
     this.btnDraw = document.getElementById('draw')
+    this.btnText = document.getElementById('text')
     this.btnRender = document.getElementById('render')
     this.currentMode = null
     this.addEvent()
@@ -28,6 +29,9 @@ export class LeftBar {
     })
     this.btnDraw.addEventListener('click', () => {
       this.updateButtonState('draw')
+    })
+    this.btnText.addEventListener('click', () => {
+      this.updateButtonState('text')
     })
     this.btnRender.addEventListener('click', () => {
       this.updateButtonState('render')
@@ -45,7 +49,7 @@ export class LeftBar {
       }
 
       //移除所有按钮的active类
-      ;[this.btnViewEdit, this.btnDraw, this.btnRender].forEach((btn) => {
+      ;[this.btnViewEdit, this.btnDraw, this.btnText, this.btnRender].forEach((btn) => {
         if (btn) btn.classList.remove('active')
       })
       //添加当前模式的active类
@@ -55,6 +59,9 @@ export class LeftBar {
           break
         case 'draw':
           this.btnDraw.classList.add('active')
+          break
+        case 'text':
+          this.btnText.classList.add('active')
           break
         case 'render':
           this.btnRender.classList.add('active')

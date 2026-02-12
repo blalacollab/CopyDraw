@@ -22,7 +22,7 @@ export class MoveElementsCommand extends Command {
       return {
         geometies: positions.geometies || element.geometies.map((p) => ({ x: p.x, y: p.y }))
       }
-    } else if (element.type === 'ImgElement') {
+    } else if (element.type === 'ImgElement' || element.type === 'TextElement') {
       return {
         x: positions.x !== undefined ? positions.x : element.x,
         y: positions.y !== undefined ? positions.y : element.y
@@ -42,7 +42,7 @@ export class MoveElementsCommand extends Command {
           await this.dataManager.updateElement(elementInfo.id, {
             geometies: elementInfo.endState.geometies.map((p) => ({ x: p.x, y: p.y }))
           })
-        } else if (element.type === 'ImgElement') {
+        } else if (element.type === 'ImgElement' || element.type === 'TextElement') {
           await this.dataManager.updateElement(elementInfo.id, {
             x: elementInfo.endState.x,
             y: elementInfo.endState.y
@@ -66,7 +66,7 @@ export class MoveElementsCommand extends Command {
           await this.dataManager.updateElement(elementInfo.id, {
             geometies: elementInfo.startState.geometies.map((p) => ({ x: p.x, y: p.y }))
           })
-        } else if (element.type === 'ImgElement') {
+        } else if (element.type === 'ImgElement' || element.type === 'TextElement') {
           await this.dataManager.updateElement(elementInfo.id, {
             x: elementInfo.startState.x,
             y: elementInfo.startState.y

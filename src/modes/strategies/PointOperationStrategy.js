@@ -7,6 +7,8 @@ import {
 } from '../../utils/viewEditHelpers.js'
 import { MovePointCommand } from '../../commands/MovePointCommand.js'
 import { AddPointCommand } from '../../commands/AddPointCommand.js'
+import { UpdateTextCommand } from '../../commands/UpdateTextCommand.js'
+import { showTextDialog } from '../../utils/textDialog.js'
 
 export class PointOperationStrategy {
   constructor({ mode, state, eventEmitter, viewport, dataManager, commandManager }) {
@@ -137,9 +139,22 @@ export class PointOperationStrategy {
     }
   }
 
-  _onDoubleClick(e) {
+  async _onDoubleClick(e) {
     if (e.button !== 0) return
     const selection = this.state.selection
+
+    // 双击文字：打开自定义弹窗编辑
+    const hitElement = this._findTopHitElement(e.offsetX, e.offsetY)
+    if (hitElement && hitElement.type === 'TextElement') {
+      const textElement = hitElement
+      await this._editTextElement(textElement)
+      selection.selectedElements = [textElement]
+      selection.selectedElement = textElement
+      selection.selectedPointIdx = -1
+      this._updateTemporary()
+      return
+    }
+
     if (selection.selectedElement && selection.selectedElement.type === 'LineElement') {
       const pointIdx = this.mode.getPointAt(selection.selectedElement, e.offsetX, e.offsetY)
       if (pointIdx === -1) {
@@ -150,6 +165,40 @@ export class PointOperationStrategy {
         selection.selectedPointIdx = pointIdx
         this._updateTemporary()
       }
+    }
+  }
+
+  _findTopHitElement(offsetX, offsetY) {
+    const allElements = this.dataManager.getAllElements()
+    for (let i = allElements.length - 1; i >= 0; i--) {
+      const el = allElements[i]
+      if (isPointOnElement(el, offsetX, offsetY, this.viewport)) {
+        return el
+      }
+    }
+    return null
+  }
+
+  async _editTextElement(textElement) {
+    const text = await showTextDialog({
+      title: '编辑文本',
+      initialValue: textElement.text || '',
+      placeholder: '输入文本，Ctrl+Enter 确认'
+    })
+    if (text === null) return
+    const value = text.trim()
+    if (!value || value === textElement.text) return
+
+    if (this.commandManager) {
+      const command = new UpdateTextCommand(
+        this.dataManager,
+        textElement.id,
+        textElement.text,
+        value
+      )
+      await this.commandManager.execute(command)
+    } else {
+      await this.dataManager.updateElement(textElement.id, { text: value })
     }
   }
 

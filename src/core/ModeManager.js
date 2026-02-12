@@ -1,6 +1,7 @@
 import { ViewEditMode } from '../modes/ViewEditMode.js'
 import { DrawMode } from '../modes/DrawMode.js'
 import { RenderMode } from '../modes/RenderMode.js'
+import { TextMode } from '../modes/TextMode.js'
 
 export class ModeManager {
   constructor(eventEmitter, viewport, dataManager, canvasArea, commandManager) {
@@ -12,6 +13,9 @@ export class ModeManager {
       },
       draw: {
         mode: new DrawMode(eventEmitter, viewport, dataManager, canvasArea, commandManager)
+      },
+      text: {
+        mode: new TextMode(eventEmitter, viewport, dataManager, canvasArea, commandManager)
       },
       render: {
         mode: new RenderMode(eventEmitter, viewport, dataManager, canvasArea)

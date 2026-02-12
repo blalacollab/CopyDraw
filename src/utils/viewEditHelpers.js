@@ -1,3 +1,5 @@
+import { getTextCanvasLayout } from './textMetrics.js'
+
 // viewEditHelpers.js - ViewEditMode相关辅助方法
 
 /**
@@ -41,7 +43,15 @@ export function isElementInRect(element, rect, viewport) {
     maxY: -Infinity
   }
 
-  if (element.type === 'ImgElement' && element.imgdata) {
+  if (element.type === 'TextElement') {
+    const layout = getTextCanvasLayout(element, viewport)
+    elementBBox = {
+      minX: layout.x,
+      minY: layout.y,
+      maxX: layout.x + layout.width,
+      maxY: layout.y + layout.height
+    }
+  } else if (element.type === 'ImgElement' && element.imgdata) {
     const center = viewport.toCanvas(element.x, element.y)
     const [w, h] = [element.imgdata.width / viewport.scale, element.imgdata.height / viewport.scale]
     // Note: This doesn't account for image rotation for simplicity.
@@ -90,6 +100,15 @@ export function isElementInRect(element, rect, viewport) {
  */
 export function isPointOnElement(element, x, y, viewport) {
   if (!element || !viewport) return false
+  if (element.type === 'TextElement') {
+    const layout = getTextCanvasLayout(element, viewport)
+    return (
+      x >= layout.x &&
+      x <= layout.x + layout.width &&
+      y >= layout.y &&
+      y <= layout.y + layout.height
+    )
+  }
   // 支持图片元素点选
   if (element.type === 'ImgElement' && element.imgdata) {
     // 获取图片中心在canvas坐标
