@@ -139,3 +139,26 @@ flowchart TD
 - 新增操作模式：继承 BaseMode，实现 activate/deactivate
 - 新增命令：继承 Command，实现 execute/undo
 - 新增策略：扩展各 Mode 下的策略类，实现 handleEvent
+
+## 测试
+
+- 测试框架：`node:test`（零第三方依赖）
+- 运行命令：`npm test`
+- 覆盖率（仅统计业务源码 `src/`）：`npm run test:coverage`
+- 覆盖率（包含测试辅助文件）：`npm run test:coverage:all`
+- 测试目录：`tests/`
+
+当前测试覆盖包含：
+
+- 事件系统：`EventEmitter`
+- 视口与缩放：`Viewport`、`zoom`
+- 几何与命中：`viewHelpers`、`viewEditHelpers`
+- 文本度量：`textMetrics`（含中文宽度测量）
+- 命令系统：`CommandManager`、`MoveElementsCommand`、`UpdateTextCommand`
+- 快捷键行为：编辑/绘制/渲染/文字模式中的旋转快捷键（含 `Command` 适配）
+- `src/` 覆盖率目标：`line/branch/function = 100%`
+
+## 新功能测试约束
+
+- 后续每次新增功能或修改行为，必须同步新增或更新 `tests/` 中对应测试用例。
+- 合入前必须本地执行 `npm test` 并通过。

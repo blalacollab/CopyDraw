@@ -132,7 +132,7 @@ export class TextMode extends BaseMode {
   _isInputTarget(target) {
     if (!target) return false
     const tag = String(target.tagName || '').toLowerCase()
-    return tag === 'input' || tag === 'textarea' || target.isContentEditable
+    return tag === 'input' || tag === 'textarea' || !!target.isContentEditable
   }
 
   async _placeText(offsetX, offsetY) {
