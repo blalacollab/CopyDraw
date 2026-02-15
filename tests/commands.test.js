@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { MoveElementsCommand } from '../src/commands/MoveElementsCommand.js'
 import { UpdateTextCommand } from '../src/commands/UpdateTextCommand.js'
+import { UpdateTextStyleCommand } from '../src/commands/UpdateTextStyleCommand.js'
 
 function createDataManagerMock(elements) {
   const map = new Map(elements.map((el) => [el.id, el]))
@@ -70,6 +71,36 @@ test('UpdateTextCommand: swallows update errors', async () => {
     }
   }
   const cmd = new UpdateTextCommand(dataManager, 't1', 'old', 'new')
+  await cmd.execute()
+  await cmd.undo()
+  assert.ok(true)
+})
+
+test('UpdateTextStyleCommand: execute + undo', async () => {
+  const element = { id: 't2', type: 'TextElement', fontSize: 20, color: '#fff' }
+  const dataManager = createDataManagerMock([element])
+  const cmd = new UpdateTextStyleCommand(
+    dataManager,
+    't2',
+    { fontSize: 20, color: '#fff' },
+    { fontSize: 30, color: '#111111', textAlign: 'right' }
+  )
+
+  await cmd.execute()
+  await cmd.undo()
+  assert.deepEqual(dataManager.updates, [
+    { id: 't2', props: { fontSize: 30, color: '#111111', textAlign: 'right' } },
+    { id: 't2', props: { fontSize: 20, color: '#fff' } }
+  ])
+})
+
+test('UpdateTextStyleCommand: swallows update errors', async () => {
+  const dataManager = {
+    async updateElement() {
+      throw new Error('db error')
+    }
+  }
+  const cmd = new UpdateTextStyleCommand(dataManager, 't3', { fontSize: 10 }, { fontSize: 22 })
   await cmd.execute()
   await cmd.undo()
   assert.ok(true)

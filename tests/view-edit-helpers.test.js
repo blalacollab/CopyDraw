@@ -34,6 +34,16 @@ test('viewEditHelpers: text hit-test and rect selection follow measured text bou
   const rectMiss = { x: 0, y: 0, w: 20, h: 20 }
   assert.equal(isElementInRect(element, rectHit, viewport), true)
   assert.equal(isElementInRect(element, rectMiss, viewport), false)
+
+  const centerElement = {
+    type: 'TextElement',
+    text: '居中',
+    x: 100,
+    y: 80,
+    fontSize: 20,
+    textAlign: 'center'
+  }
+  assert.equal(isPointOnElement(centerElement, 100, 82, viewport), true)
 })
 
 test('viewEditHelpers: line element hit-test', () => {

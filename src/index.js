@@ -3,12 +3,14 @@ import { EventEmitter } from './common/EventEmitter.js'
 import { CommandManager } from './common/CommandManager.js'
 import { Info } from './ui/Info.js'
 import { LeftBar } from './ui/LeftBar.js'
+import { TextPropertyPanel } from './ui/TextPropertyPanel.js'
 import { CanvasArea } from './ui/CanvasArea.js'
 import { Viewport } from './core/Viewport.js'
 import { DataManager } from './core/DataManager.js'
 import { ModeManager } from './core/ModeManager.js'
 import { Render } from './renders/Render.js'
 import { TopBar } from './ui/TopBar.js'
+import { UpdateTextStyleCommand } from './commands/UpdateTextStyleCommand.js'
 
 // 0. 全局事件派发器
 const eventEmitter = new EventEmitter()
@@ -20,6 +22,7 @@ const viewport = new Viewport(eventEmitter)
 const info = new Info(eventEmitter)
 const topBar = new TopBar(eventEmitter)
 const leftBar = new LeftBar(eventEmitter)
+const textPropertyPanel = new TextPropertyPanel(eventEmitter)
 
 const canvasContainer = document.getElementById('canvasContainer')
 const canvasArea = new CanvasArea(canvasContainer, eventEmitter)
@@ -92,6 +95,17 @@ eventEmitter.on('saveFailed', (error) => {
 
 eventEmitter.on('deleteElement', (elementId) => {
   dataManager.deleteElement(elementId)
+})
+
+eventEmitter.on('updateTextStyle', (payload) => {
+  if (!payload || !payload.elementId || !payload.newProps) return
+  const command = new UpdateTextStyleCommand(
+    dataManager,
+    payload.elementId,
+    payload.oldProps || {},
+    payload.newProps
+  )
+  commandManager.execute(command)
 })
 
 // 渲染策略相关事件
@@ -169,7 +183,16 @@ window.addEventListener('resize', () => {
 })
 
 // 9. 快捷键支持模式切换（数字键1/2/3/4）
+function isInputTarget(target) {
+  if (!target) return false
+  const tag = String(target.tagName || '').toLowerCase()
+  return tag === 'input' || tag === 'textarea' || !!target.isContentEditable
+}
+
 document.addEventListener('keydown', (e) => {
+  if (isInputTarget(e.target)) {
+    return
+  }
   if (e.key === '1') leftBar.btnViewEdit.click()
   if (e.key === '2') leftBar.btnDraw.click()
   if (e.key === '3') leftBar.btnText.click()

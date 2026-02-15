@@ -15,6 +15,7 @@ export class KeyboardStrategy {
 
   handleEvent(e) {
     if (e.type !== 'keydown') return
+    if (this._isInputTarget(e.target)) return
     // e.preventDefault() // 阻止默认事件
 
     // 路由到不同策略
@@ -100,5 +101,11 @@ export class KeyboardStrategy {
       default:
         break
     }
+  }
+
+  _isInputTarget(target) {
+    if (!target) return false
+    const tag = String(target.tagName || '').toLowerCase()
+    return tag === 'input' || tag === 'textarea' || !!target.isContentEditable
   }
 }

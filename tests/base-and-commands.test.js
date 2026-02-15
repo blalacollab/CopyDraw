@@ -25,6 +25,23 @@ test('generateId and Element/TextElement create valid identifiers and payload', 
   assert.equal(json.y, 20)
   assert.equal(json.fontSize, 30)
   assert.equal(json.color, '#fff')
+  assert.equal(json.fontFamily, 'sans-serif')
+  assert.equal(json.lineHeight, 1.25)
+  assert.equal(json.textAlign, 'left')
+
+  const styled = new TextElement('x', 1, 2, {
+    fontFamily: ' serif ',
+    fontSize: 6,
+    color: '',
+    lineHeight: 10,
+    textAlign: 'RIGHT'
+  })
+  const styledJson = styled.toJSON()
+  assert.equal(styledJson.fontFamily, 'serif')
+  assert.equal(styledJson.fontSize, 8)
+  assert.equal(styledJson.color, '#ffffff')
+  assert.equal(styledJson.lineHeight, 3)
+  assert.equal(styledJson.textAlign, 'right')
 })
 
 test('BaseMode activate/deactivate and Command abstract methods', () => {

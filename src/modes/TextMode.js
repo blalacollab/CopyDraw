@@ -2,7 +2,15 @@ import { BaseMode } from './BaseMode.js'
 import { ViewOperationStrategy } from './strategies/ViewOperationStrategy.js'
 import { AddElementCommand } from '../commands/AddElementCommand.js'
 import { TextElement } from '../elements/TextElement.js'
-import { showTextDialog } from '../utils/textDialog.js'
+
+const DEFAULT_TEXT_STYLE = {
+  text: '新文本',
+  fontFamily: 'sans-serif',
+  fontSize: 24,
+  color: '#ffffff',
+  lineHeight: 1.25,
+  textAlign: 'left'
+}
 
 /**
  * TextMode：文本绘制模式
@@ -19,6 +27,7 @@ export class TextMode extends BaseMode {
     this._isMouseDown = false
     this._mouseDownPos = null
     this._isDragging = false
+    this.textStylePreset = { ...DEFAULT_TEXT_STYLE }
 
     this.strategies = {
       view: new ViewOperationStrategy({
@@ -31,6 +40,10 @@ export class TextMode extends BaseMode {
     }
 
     this._boundHandleEvent = this._handleEvent.bind(this)
+    this._boundTextStylePresetChange = this._handleTextStylePresetChange.bind(this)
+    this._boundCreateTextAt = this._createTextAt.bind(this)
+    this.eventEmitter.on('textStylePresetChange', this._boundTextStylePresetChange)
+    this.eventEmitter.on('createTextAt', this._boundCreateTextAt)
   }
 
   activate() {
@@ -135,17 +148,59 @@ export class TextMode extends BaseMode {
     return tag === 'input' || tag === 'textarea' || !!target.isContentEditable
   }
 
-  async _placeText(offsetX, offsetY) {
-    const text = await showTextDialog({
-      title: '新增文本',
-      placeholder: '输入文本，Ctrl+Enter 确认'
-    })
-    if (text === null) return
-    const value = text.trim()
-    if (!value) return
+  _handleTextStylePresetChange(style = {}) {
+    this.textStylePreset = {
+      ...this.textStylePreset,
+      ...this._normalizeStyle(style)
+    }
+  }
 
+  _normalizeStyle(style = {}) {
+    const normalized = {}
+    if (typeof style.fontFamily === 'string' && style.fontFamily.trim()) {
+      normalized.fontFamily = style.fontFamily.trim()
+    }
+    const size = Number(style.fontSize)
+    if (Number.isFinite(size)) {
+      normalized.fontSize = Math.min(240, Math.max(8, size))
+    }
+    if (typeof style.color === 'string' && style.color) {
+      normalized.color = style.color
+    }
+    if (typeof style.text === 'string') {
+      normalized.text = style.text
+    }
+    const lineHeight = Number(style.lineHeight)
+    if (Number.isFinite(lineHeight)) {
+      normalized.lineHeight = Math.min(3, Math.max(0.8, lineHeight))
+    }
+    const align = String(style.textAlign || style.align || '').toLowerCase()
+    if (align === 'left' || align === 'center' || align === 'right') {
+      normalized.textAlign = align
+    }
+    return normalized
+  }
+
+  async _placeText(offsetX, offsetY) {
     const worldPos = this.viewport.toWorld(offsetX, offsetY)
-    const element = new TextElement(value, worldPos.x, worldPos.y)
+    this.eventEmitter.emit('openTextCreatePanel', {
+      worldPos,
+      style: { ...this.textStylePreset }
+    })
+  }
+
+  _createTextAt(payload = {}) {
+    if (!this.isActive) return
+    if (!payload.worldPos) return
+
+    const style = this._normalizeStyle(payload.style || {})
+    const value = String(payload.text ?? style.text ?? '').trim() || '新文本'
+
+    const element = new TextElement(value, payload.worldPos.x, payload.worldPos.y, {
+      ...this.textStylePreset,
+      ...style,
+      text: value
+    })
 
     if (this.commandManager) {
       const command = new AddElementCommand(this.dataManager, element)

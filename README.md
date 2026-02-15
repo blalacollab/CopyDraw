@@ -113,6 +113,7 @@ flowchart TD
 - **事件驱动**：基于 EventEmitter 的全局事件解耦，模式、策略、UI、渲染等均通过事件通信。
 - **辅助工具**：如 viewHelpers、viewEditHelpers，提供坐标、几何、批量操作等通用能力。
 - **高性能渲染**：主渲染器+多种渲染策略，支持不同风格和性能优化。
+- **文字属性面板**：支持文本内容、字体、字号、颜色、行高、对齐实时调整；在 Text 模式作为默认样式，在 View/Edit 选中文字后可直接改内容与样式（支持撤销/重做），并支持鼠标拖动面板位置。
 
 ### 主要交互与快捷键
 
@@ -142,10 +143,14 @@ flowchart TD
 
 ## 测试
 
-- 测试框架：`node:test`（零第三方依赖）
-- 运行命令：`npm test`
+- 单元测试框架：`node:test`
+- E2E 测试框架：`Playwright`
+- 单元测试命令：`npm test`
 - 覆盖率（仅统计业务源码 `src/`）：`npm run test:coverage`
 - 覆盖率（包含测试辅助文件）：`npm run test:coverage:all`
+- E2E 主链路测试：`npm run test:e2e`
+- 首次运行 E2E 需安装浏览器：`npx playwright install chromium`
+- 一键执行单元+E2E：`npm run test:all`
 - 测试目录：`tests/`
 
 当前测试覆盖包含：
@@ -156,9 +161,10 @@ flowchart TD
 - 文本度量：`textMetrics`（含中文宽度测量）
 - 命令系统：`CommandManager`、`MoveElementsCommand`、`UpdateTextCommand`
 - 快捷键行为：编辑/绘制/渲染/文字模式中的旋转快捷键（含 `Command` 适配）
+- E2E 主链路：导入图片 → 绘制文字 → 选择/移动/删除 → 导出（仅导出数据层）
 - `src/` 覆盖率目标：`line/branch/function = 100%`
 
 ## 新功能测试约束
 
 - 后续每次新增功能或修改行为，必须同步新增或更新 `tests/` 中对应测试用例。
-- 合入前必须本地执行 `npm test` 并通过。
+- 合入前必须本地执行 `npm test` 与 `npm run test:e2e` 并通过。

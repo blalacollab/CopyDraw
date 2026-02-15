@@ -115,7 +115,7 @@ export class Render {
         const ctx = this.canvasArea.dataCtx
         ctx.save()
         ctx.strokeStyle = COLOR.LINE
-        ctx.lineWidth = 3
+        ctx.lineWidth = this._getWorldStrokeWidth(element.width, 3)
         ctx.lineCap = 'round'
         ctx.lineJoin = 'round'
         ctx.beginPath()
@@ -160,7 +160,7 @@ export class Render {
             // pressure 映射线宽
             const w0 = p0.pressure ? 1 + p0.pressure * 4 : element.width || 2
             const w1 = p1.pressure ? 1 + p1.pressure * 4 : element.width || 2
-            ctx.lineWidth = (w0 + w1) / 2
+            ctx.lineWidth = this._getWorldStrokeWidth((w0 + w1) / 2, 2)
             ctx.beginPath()
             ctx.moveTo(c0.x, c0.y)
             ctx.lineTo(c1.x, c1.y)
@@ -180,7 +180,14 @@ export class Render {
         ctx.textAlign = 'left'
         ctx.textBaseline = 'top'
         layout.lines.forEach((line, idx) => {
-          ctx.fillText(line, canvasPos.x, canvasPos.y + idx * layout.style.lineHeight)
+          const lineWidth = layout.lineWidths[idx] || 0
+          let lineX = layout.x
+          if (layout.style.textAlign === 'center') {
+            lineX = layout.x + (layout.width - lineWidth) / 2
+          } else if (layout.style.textAlign === 'right') {
+            lineX = layout.x + (layout.width - lineWidth)
+          }
+          ctx.fillText(line, lineX, layout.y + idx * layout.style.lineHeight)
         })
         ctx.restore()
       }
@@ -236,7 +243,7 @@ export class Render {
             const c1 = viewport.toCanvas(p1.x, p1.y)
             const w0 = p0.pressure ? 1 + p0.pressure * 4 : 3
             const w1 = p1.pressure ? 1 + p1.pressure * 4 : 3
-            ctx.lineWidth = (w0 + w1) / 2
+            ctx.lineWidth = this._getWorldStrokeWidth((w0 + w1) / 2, 3)
             ctx.beginPath()
             ctx.moveTo(c0.x, c0.y)
             ctx.lineTo(c1.x, c1.y)
@@ -258,7 +265,7 @@ export class Render {
             temporary.linePoints[temporary.linePoints.length - 1].x,
             temporary.linePoints[temporary.linePoints.length - 1].y
           )
-          ctx.lineWidth = 3
+          ctx.lineWidth = this._getWorldStrokeWidth(3, 3)
           ctx.beginPath()
           ctx.moveTo(lastActualPoint.x, lastActualPoint.y)
           ctx.lineTo(previewPoint.x, previewPoint.y)
@@ -378,7 +385,7 @@ export class Render {
           ctx.strokeStyle = strokeColor
           ctx.lineWidth = 2
           ctx.setLineDash([6, 3])
-          ctx.strokeRect(viewPos.x, viewPos.y, layout.width, layout.height)
+          ctx.strokeRect(layout.x, layout.y, layout.width, layout.height)
           ctx.setLineDash([])
           ctx.restore()
         }
@@ -437,9 +444,16 @@ export class Render {
           ctx.textAlign = 'left'
           ctx.textBaseline = 'top'
           layout.lines.forEach((line, idx) => {
-            ctx.fillText(line, viewPos.x, viewPos.y + idx * layout.style.lineHeight)
+            const lineWidth = layout.lineWidths[idx] || 0
+            let lineX = layout.x
+            if (layout.style.textAlign === 'center') {
+              lineX = layout.x + (layout.width - lineWidth) / 2
+            } else if (layout.style.textAlign === 'right') {
+              lineX = layout.x + (layout.width - lineWidth)
+            }
+            ctx.fillText(line, lineX, layout.y + idx * layout.style.lineHeight)
           })
-          ctx.strokeRect(viewPos.x, viewPos.y, layout.width, layout.height)
+          ctx.strokeRect(layout.x, layout.y, layout.width, layout.height)
         }
         ctx.restore()
       })
@@ -469,6 +483,17 @@ export class Render {
       this.canvasArea.mouseCanvas.width,
       this.canvasArea.mouseCanvas.height
     )
+  }
+
+  _getViewportScale() {
+    const scale = Number(this.viewport?.scale)
+    return Number.isFinite(scale) && scale > 0 ? scale : 1
+  }
+
+  _getWorldStrokeWidth(width, fallback = 1) {
+    const base = Number(width)
+    const worldWidth = Number.isFinite(base) && base > 0 ? base : fallback
+    return worldWidth / this._getViewportScale()
   }
 
   /**

@@ -164,6 +164,56 @@ test('KeyboardStrategy: covers delete/copy/paste/move/undo/redo/center/drag-conf
   assert.equal(reset, 1)
 })
 
+test('KeyboardStrategy: ignores shortcuts when typing in input/textarea/contenteditable', () => {
+  let deleted = 0
+  let moved = 0
+  let undo = 0
+  const strategy = new KeyboardStrategy({
+    mode: {
+      enterMoveMode() {
+        moved += 1
+      },
+      dataManager: { getAllElements: () => [] },
+      viewport: {},
+      canvasArea: {},
+      eventEmitter: new EventEmitter()
+    },
+    state: { selection: { selectedElements: [{ id: '1' }] } },
+    eventEmitter: new EventEmitter(),
+    commandManager: {
+      undo() {
+        undo += 1
+      },
+      redo() {}
+    },
+    strategies: {
+      drag: { isMovingByKey: false, _finalizeMove() {}, _resetState() {} },
+      delete: {
+        handleDelete() {
+          deleted += 1
+        }
+      },
+      copyPaste: { handleCopy() {}, handlePaste() {} },
+      view: { handleRotation() {} }
+    }
+  })
+
+  const targets = [
+    { tagName: 'input' },
+    { tagName: 'textarea' },
+    { tagName: 'div', isContentEditable: true }
+  ]
+  targets.forEach((target) => {
+    strategy.handleEvent({ type: 'keydown', key: 'Delete', target })
+    strategy.handleEvent({ type: 'keydown', key: 'm', target, preventDefault() {} })
+    strategy.handleEvent({ type: 'keydown', key: 'z', ctrlKey: true, target, preventDefault() {} })
+  })
+
+  assert.equal(deleted, 0)
+  assert.equal(moved, 0)
+  assert.equal(undo, 0)
+})
+
 test('DrawKeyboardStrategy: supports meta + arrow rotation', () => {
   let rotated = null
   const strategy = new DrawKeyboardStrategy({

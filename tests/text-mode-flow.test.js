@@ -122,12 +122,17 @@ test('TextMode: inactive branch and input target helper', () => {
   assert.equal(mode._isInputTarget({ tagName: 'div' }), false)
 })
 
-test('TextMode: _placeText confirm/cancel/empty and commandManager fallback', async () => {
+test('TextMode: _placeText opens panel and createTextAt creates text with style', async () => {
   installBrowserMocks()
   const canvas = createCanvasMock()
+  const emitterWithCmd = new EventEmitter()
   const commands = []
+  let openPayload = null
+  emitterWithCmd.on('openTextCreatePanel', (payload) => {
+    openPayload = payload
+  })
   const modeWithCmd = new TextMode(
-    new EventEmitter(),
+    emitterWithCmd,
     { toWorld: () => ({ x: 7, y: 8 }) },
     {},
     { dataCanvas: canvas },
@@ -138,36 +143,34 @@ test('TextMode: _placeText confirm/cancel/empty and commandManager fallback', as
     }
   )
 
-  const p1 = modeWithCmd._placeText(10, 20)
-  let overlay = document.getElementById('textDialogOverlay')
-  const panel1 = overlay.children[0]
-  const input1 = panel1.children[1]
-  const okBtn1 = panel1.children[2].children[1]
-  input1.value = 'hello'
-  okBtn1.dispatchEvent({ type: 'click' })
-  await p1
+  modeWithCmd.textStylePreset = {
+    text: 'hello',
+    fontFamily: 'sans-serif',
+    fontSize: 24,
+    color: '#ffffff',
+    lineHeight: 1.25,
+    textAlign: 'left'
+  }
+  modeWithCmd.isActive = true
+  await modeWithCmd._placeText(10, 20)
+  assert.deepEqual(openPayload.worldPos, { x: 7, y: 8 })
+  assert.equal(commands.length, 0)
+  emitterWithCmd.emit('createTextAt', {
+    worldPos: { x: 7, y: 8 },
+    text: 'hello',
+    style: modeWithCmd.textStylePreset
+  })
   assert.equal(commands.length, 1)
   assert.equal(commands[0] instanceof AddElementCommand, true)
 
-  const p2 = modeWithCmd._placeText(10, 20)
-  overlay = document.getElementById('textDialogOverlay')
-  const cancelBtn = overlay.children[0].children[2].children[0]
-  cancelBtn.dispatchEvent({ type: 'click' })
-  await p2
-  assert.equal(commands.length, 1)
-
-  const p3 = modeWithCmd._placeText(10, 20)
-  overlay = document.getElementById('textDialogOverlay')
-  const input3 = overlay.children[0].children[1]
-  const okBtn3 = overlay.children[0].children[2].children[1]
-  input3.value = '   '
-  okBtn3.dispatchEvent({ type: 'click' })
-  await p3
-  assert.equal(commands.length, 1)
-
   let added = null
+  const emitterNoCmd = new EventEmitter()
+  let openPayloadNoCmd = null
+  emitterNoCmd.on('openTextCreatePanel', (payload) => {
+    openPayloadNoCmd = payload
+  })
   const modeNoCmd = new TextMode(
-    new EventEmitter(),
+    emitterNoCmd,
     { toWorld: () => ({ x: 1, y: 2 }) },
     {
       addElement(el) {
@@ -177,14 +180,54 @@ test('TextMode: _placeText confirm/cancel/empty and commandManager fallback', as
     { dataCanvas: canvas },
     null
   )
-  const p4 = modeNoCmd._placeText(1, 2)
-  overlay = document.getElementById('textDialogOverlay')
-  const input4 = overlay.children[0].children[1]
-  const okBtn4 = overlay.children[0].children[2].children[1]
-  input4.value = 'world'
-  okBtn4.dispatchEvent({ type: 'click' })
-  await p4
+  modeNoCmd.isActive = true
+  emitterNoCmd.emit('textStylePresetChange', { text: 'world' })
+  await modeNoCmd._placeText(1, 2)
+  assert.deepEqual(openPayloadNoCmd.worldPos, { x: 1, y: 2 })
+  emitterNoCmd.emit('createTextAt', {
+    worldPos: openPayloadNoCmd.worldPos,
+    text: 'world',
+    style: modeNoCmd.textStylePreset
+  })
   assert.equal(added.text, 'world')
+
+  emitterNoCmd.emit('textStylePresetChange', {
+    text: 'styled',
+    fontFamily: 'serif',
+    fontSize: 40,
+    color: '#123456',
+    lineHeight: 2.2,
+    textAlign: 'center'
+  })
+  await modeNoCmd._placeText(1, 2)
+  emitterNoCmd.emit('createTextAt', {
+    worldPos: openPayloadNoCmd.worldPos,
+    text: 'styled',
+    style: modeNoCmd.textStylePreset
+  })
+  assert.equal(added.text, 'styled')
+  assert.equal(added.fontFamily, 'serif')
+  assert.equal(added.fontSize, 40)
+  assert.equal(added.color, '#123456')
+  assert.equal(added.lineHeight, 2.2)
+  assert.equal(added.textAlign, 'center')
+
+  emitterNoCmd.emit('textStylePresetChange', { text: '   ' })
+  await modeNoCmd._placeText(1, 2)
+  emitterNoCmd.emit('createTextAt', {
+    worldPos: openPayloadNoCmd.worldPos,
+    text: '   ',
+    style: modeNoCmd.textStylePreset
+  })
+  assert.equal(added.text, '新文本')
+
+  modeNoCmd.isActive = false
+  emitterNoCmd.emit('createTextAt', {
+    worldPos: openPayloadNoCmd.worldPos,
+    text: 'will-not-create',
+    style: modeNoCmd.textStylePreset
+  })
+  assert.equal(added.text, '新文本')
 })
 
 test('TextMode: ignores non-left and non-action events in text mode', () => {
@@ -272,4 +315,49 @@ test('TextMode: covers key arrow without modifier and mousemove with missing dow
   mode._handleEvent({ type: 'mousemove', offsetX: 10, offsetY: 10 })
 
   assert.equal(viewCalls, 1)
+})
+
+test('TextMode: normalizes incoming text style preset values', () => {
+  installBrowserMocks()
+  const mode = new TextMode(
+    new EventEmitter(),
+    { toWorld: () => ({ x: 0, y: 0 }) },
+    {},
+    { dataCanvas: createCanvasMock() },
+    {}
+  )
+
+  mode._handleTextStylePresetChange({
+    text: 123,
+    fontFamily: '  ',
+    fontSize: 999,
+    color: '',
+    lineHeight: 0.1,
+    textAlign: 'middle'
+  })
+  assert.equal(mode.textStylePreset.fontSize, 240)
+  assert.equal(mode.textStylePreset.lineHeight, 0.8)
+  assert.equal(mode.textStylePreset.color, '#ffffff')
+  assert.equal(mode.textStylePreset.textAlign, 'left')
+  assert.equal(mode.textStylePreset.text, '新文本')
+
+  mode._handleTextStylePresetChange({
+    text: 'content',
+    fontFamily: ' serif ',
+    fontSize: 42,
+    color: '#999999',
+    lineHeight: 2.4,
+    align: 'right'
+  })
+  assert.equal(mode.textStylePreset.fontFamily, 'serif')
+  assert.equal(mode.textStylePreset.fontSize, 42)
+  assert.equal(mode.textStylePreset.color, '#999999')
+  assert.equal(mode.textStylePreset.lineHeight, 2.4)
+  assert.equal(mode.textStylePreset.textAlign, 'right')
+  assert.equal(mode.textStylePreset.text, 'content')
+
+  // no-op payload still keeps previous style; covers default-param/invalid branches
+  mode._handleTextStylePresetChange()
+  mode._handleTextStylePresetChange({ lineHeight: 'NaN', textAlign: 'center' })
+  assert.equal(mode.textStylePreset.textAlign, 'center')
 })

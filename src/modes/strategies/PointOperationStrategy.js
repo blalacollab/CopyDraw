@@ -1,14 +1,8 @@
 // PointOperationStrategy：点操作策略
 // 负责点选、点拖动、点删除、点新增等所有点相关交互
-import {
-  isPointOnElement,
-  pointToSegmentDistance,
-  getClosestSegment
-} from '../../utils/viewEditHelpers.js'
+import { isPointOnElement, getClosestSegment } from '../../utils/viewEditHelpers.js'
 import { MovePointCommand } from '../../commands/MovePointCommand.js'
 import { AddPointCommand } from '../../commands/AddPointCommand.js'
-import { UpdateTextCommand } from '../../commands/UpdateTextCommand.js'
-import { showTextDialog } from '../../utils/textDialog.js'
 
 export class PointOperationStrategy {
   constructor({ mode, state, eventEmitter, viewport, dataManager, commandManager }) {
@@ -143,15 +137,18 @@ export class PointOperationStrategy {
     if (e.button !== 0) return
     const selection = this.state.selection
 
-    // 双击文字：打开自定义弹窗编辑
+    // 双击文字：选中并聚焦到属性面板内容输入（无弹窗编辑）
     const hitElement = this._findTopHitElement(e.offsetX, e.offsetY)
     if (hitElement && hitElement.type === 'TextElement') {
       const textElement = hitElement
-      await this._editTextElement(textElement)
       selection.selectedElements = [textElement]
       selection.selectedElement = textElement
       selection.selectedPointIdx = -1
       this._updateTemporary()
+      this.eventEmitter.emit('focusTextPanelContent', {
+        elementId: textElement.id,
+        selectAll: true
+      })
       return
     }
 
@@ -177,29 +174,6 @@ export class PointOperationStrategy {
       }
     }
     return null
-  }
-
-  async _editTextElement(textElement) {
-    const text = await showTextDialog({
-      title: '编辑文本',
-      initialValue: textElement.text || '',
-      placeholder: '输入文本，Ctrl+Enter 确认'
-    })
-    if (text === null) return
-    const value = text.trim()
-    if (!value || value === textElement.text) return
-
-    if (this.commandManager) {
-      const command = new UpdateTextCommand(
-        this.dataManager,
-        textElement.id,
-        textElement.text,
-        value
-      )
-      await this.commandManager.execute(command)
-    } else {
-      await this.dataManager.updateElement(textElement.id, { text: value })
-    }
   }
 
   _addPointToLine(lineElement, offsetX, offsetY) {
